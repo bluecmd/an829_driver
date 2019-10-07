@@ -1,0 +1,198 @@
+diff --git a/altera_dma.c b/altera_dma.c
+index 85c976a..1d2d251 100644
+--- a/altera_dma.c
++++ b/altera_dma.c
+@@ -16,7 +16,7 @@
+ #include <linux/unistd.h>
+ 
+ #define TIMEOUT 0x2000000
+-
++#define BAR 2
+ 
+ static long altera_dma_ioctl (struct file *filp, unsigned int cmd, unsigned long arg)
+ {
+@@ -749,8 +749,8 @@ static int __init altera_pci_probe(struct pci_dev *dev, const struct pci_device_
+     pci_read_config_byte(dev, PCI_INTERRUPT_PIN, &bk_ptr->irq_pin);
+     pci_read_config_byte(dev, PCI_INTERRUPT_LINE, &bk_ptr->irq_line);
+ 
+-    if (!pci_set_dma_mask(dev, DMA_BIT_MASK(DMAMASK))) {
+-        pci_set_consistent_dma_mask(dev, DMA_BIT_MASK(DMAMASK));
++    if (!pci_set_dma_mask(dev, DMA_BIT_MASK(64))) {
++        pci_set_consistent_dma_mask(dev, DMA_BIT_MASK(64));
+         dev_info(&dev->dev, "using a 64-bit irq mask\n");
+     } else {
+         dev_info(&dev->dev, "unable to use 64-bit irq mask\n");
+diff --git a/altera_dma.h b/altera_dma.h
+index 15d3f1f..532bd12 100644
+--- a/altera_dma.h
++++ b/altera_dma.h
+@@ -38,69 +38,55 @@
+ #define ALTERA_LITE_DMA_WR_LAST_PTR             0x0110
+ 
+ #define ALTERA_EPLAST_DIFF              1
++
+ #define ALTERA_DMA_NUM_DWORDS           512
++
++#define ONCHIP_MEM_BASE                 0x0000000
++#define ONCHIP_MEM_DESC_MEM_BASE        0x0000
++
++//Added for DDR3 design
++//#define OFFCHIP_MEM_BASE				0x0000
++//#define RD_CTRL_BUF_BASE_LOW			0x08000000
++//#define RD_CTRL_BUF_BASE_HI				0x0000
++//#define WR_CTRL_BUF_BASE_LOW			0x08002000
++//#define WR_CTRL_BUF_BASE_HI				0x0000
++
++//DDR3 only, 256MB
++//#define OFFCHIP_MEM_BASE				0x0000
++//#define RD_CTRL_BUF_BASE_LOW			0x10000000
++//#define RD_CTRL_BUF_BASE_HI				0x0000
++//#define WR_CTRL_BUF_BASE_LOW			0x10002000
++//#define WR_CTRL_BUF_BASE_HI				0x0000
++
++//DDR3 only 512MB
++//#define OFFCHIP_MEM_BASE				0x0000
++//#define RD_CTRL_BUF_BASE_LOW			0x20000000
++//#define RD_CTRL_BUF_BASE_HI				0x0000
++//#define WR_CTRL_BUF_BASE_LOW			0x20002000
++//#define WR_CTRL_BUF_BASE_HI				0x0000
++
++//DDR3 only 1GB
++//#define OFFCHIP_MEM_BASE				0x0000
++//#define RD_CTRL_BUF_BASE_LOW			0x40000000
++//#define RD_CTRL_BUF_BASE_HI				0x0000
++//#define WR_CTRL_BUF_BASE_LOW			0x40002000
++//#define WR_CTRL_BUF_BASE_HI				0x0000
++
++//DDR3 128MB
++#define OFFCHIP_MEM_BASE				0x0000
++#define RD_CTRL_BUF_BASE_LOW			0x02002000
++#define RD_CTRL_BUF_BASE_HI				0x0000
++#define WR_CTRL_BUF_BASE_LOW			0x02004000
++#define WR_CTRL_BUF_BASE_HI				0x0000
++
++//End for DDR3 design
++
+ #define DESC_CTRLLER_BASE               0x0000
++
+ #define CTL_STS_BITS                    0x0100
++
+ #define TIMEOUT_THRESH                  0xFFFF
+ #define MAX_NUM_DWORDS                  0x7FFFF//4096
+-
+-//Arria 10
+-#ifdef ARRIA10
+-#warning "Defined ARRIA10 Sucessful"
+-#define ONCHIP_MEM_BASE                 	0x10000000
+-#define ONCHIP_MEM_DESC_MEM_BASE        	0x10000000
+-#define OFFCHIP_MEM_BASE			0x00000000
+-#define RD_CTRL_BUF_BASE_LOW			0x80000000
+-#define RD_CTRL_BUF_BASE_HI			0x80001FFF
+-#define WR_CTRL_BUF_BASE_LOW			0x80002000
+-#define WR_CTRL_BUF_BASE_HI			0x80003FFF
+-#define BAR 2
+-#define DMAMASK 64
+-#endif
+-
+-//Cyclone 10
+-#ifdef CYCLONE10
+-#warning "Defined CYCLONE10 Sucessful"
+-#define ONCHIP_MEM_BASE                 	0x40000000
+-#define ONCHIP_MEM_DESC_MEM_BASE        	0x40000000
+-#define OFFCHIP_MEM_BASE			0x00000000
+-#define RD_CTRL_BUF_BASE_LOW			0x80000000
+-#define RD_CTRL_BUF_BASE_HI			0x80001FFF
+-#define WR_CTRL_BUF_BASE_LOW			0x80002000
+-#define WR_CTRL_BUF_BASE_HI			0x80003FFF
+-#define BAR 2
+-#define DMAMASK 64
+-#endif
+-
+-//Stratix 10
+-#ifdef STRATIX10
+-#warning "Defined STRATIX10 Sucessful"
+-#define ONCHIP_MEM_BASE                		0x00000000
+-#define ONCHIP_MEM_DESC_MEM_BASE        	0x00000000
+-#define OFFCHIP_MEM_BASE			0x80000000
+-#define RD_CTRL_BUF_BASE_LOW			0x00010000
+-#define RD_CTRL_BUF_BASE_HI			0x0001FFFF
+-#define WR_CTRL_BUF_BASE_LOW			0x00020000
+-#define WR_CTRL_BUF_BASE_HI			0x0002FFFF
+-#define BAR 4
+-#define DMAMASK 32
+-#endif
+-
+-//Stratix V
+-#ifdef STRATIXV
+-#warning "Defined STRATIXV Sucessful"
+-#define ONCHIP_MEM_BASE                 	0x08000000
+-#define ONCHIP_MEM_DESC_MEM_BASE        	0x08000000
+-#define OFFCHIP_MEM_BASE			0x00000000
+-#define RD_CTRL_BUF_BASE_LOW			0x08010000
+-#define RD_CTRL_BUF_BASE_HI			0x08011FFF
+-#define WR_CTRL_BUF_BASE_LOW			0x08012000
+-#define WR_CTRL_BUF_BASE_HI			0x08013FFF
+-#define BAR 4
+-#define DMAMASK 64
+-#endif
+-
+-
+ struct dma_descriptor {
+     u32 src_addr_ldw;
+     u32 src_addr_udw;
+diff --git a/altera_dma.mod.c b/altera_dma.mod.c
+index 74c0e2b..b99645a 100644
+--- a/altera_dma.mod.c
++++ b/altera_dma.mod.c
+@@ -36,16 +36,15 @@ __attribute__((section("__versions"))) = {
+ 	{ 0xde0bdcff, "memset" },
+ 	{ 0x9f1019bd, "pci_set_dma_mask" },
+ 	{ 0x747f9a8e, "pci_iounmap" },
+-	{ 0x8502d858, "dev_err" },
+ 	{ 0xea147363, "printk" },
+ 	{ 0x85f8a266, "copy_to_user" },
+ 	{ 0xb4390f9a, "mcount" },
+ 	{ 0x16305289, "warn_slowpath_null" },
+ 	{ 0xa6d1bdca, "cdev_add" },
+-	{ 0x9b3277f3, "_dev_info" },
+ 	{ 0x78764f4e, "pv_irq_ops" },
+ 	{ 0x42c8de35, "ioremap_nocache" },
+ 	{ 0x1000e51, "schedule" },
++	{ 0xf18b1317, "dev_driver_string" },
+ 	{ 0x68f7c535, "pci_unregister_driver" },
+ 	{ 0x2044fa9e, "kmem_cache_alloc_trace" },
+ 	{ 0x642e54ac, "__wake_up" },
+@@ -75,11 +74,10 @@ __attribute__((section(".modinfo"))) =
+ 
+ MODULE_ALIAS("pci:v00001172d0000E003sv*sd*bc*sc*i*");
+ 
+-MODULE_INFO(srcversion, "F0DCB9B66172342BFB0E365");
++MODULE_INFO(srcversion, "D5B421EF65A228AC81E40CA");
+ 
+ static const struct rheldata _rheldata __used
+ __attribute__((section(".rheldata"))) = {
+ 	.rhel_major = 6,
+-	.rhel_minor = 9,
+-	.rhel_release = 695,
++	.rhel_minor = 5,
+ };
+diff --git a/user/user.c b/user/user.c
+index 48b0a67..9922d2f 100644
+--- a/user/user.c
++++ b/user/user.c
+@@ -64,12 +64,12 @@ void print_menu (char *buf) {
+         printf("** %d) enable/disable simul dma              **\n", ALTERA_CMD_ENA_DIS_SIMUL                     );
+         printf("** %d) set num dwords (256 - 4096)           **\n", ALTERA_CMD_MODIFY_NUM_DWORDS                 );
+         printf("** %d) set num descriptors (1 - 127)         **\n", ALTERA_CMD_MODIFY_NUM_DESC                   );
+-	printf("** %d) toggle on-chip or off-chip memory     **\n", ALTERA_CMD_ONCHIP_OFFCHIP			);
++	//printf("** %d) toggle on-chip or off-chip memory     **\n", ALTERA_CMD_ONCHIP_OFFCHIP			);
+         printf("** %d) loop dma                              **\n", ALTERA_LOOP                                  );
+-	//printf("** %d) random				     **\n", ALTERA_CMD_RAND				);
++	printf("** %d) random				     **\n", ALTERA_CMD_RAND				);
+         printf("** %d) exit                                 **\n", ALTERA_EXIT                                  );
+         printf("**********************************************\n");
+- 	printf("Access On Chip RAM	? %d\n", ((struct dma_status *)buf)->onchip);
++ 	//printf("Access On Chip RAM	? %d\n", ((struct dma_status *)buf)->onchip);
+ 	//printf("Random			? %d\n", ((struct dma_status *)buf) -> rand);
+         printf("Run Read                ? %d\n", ((struct dma_status *)buf)->run_read); 
+         printf("Run Write               ? %d\n", ((struct dma_status *)buf)->run_write); 
